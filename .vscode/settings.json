@@ -1,0 +1,8 @@
+{
+    "scm.defaultViewMode": "tree",
+    "scm.alwaysShowActions": true,
+    "python.pythonPath": "C:\\Users\\Judiths\\Anaconda3\\envs\\Experiment20191212\\python.exe",
+    "editor.tabSize": 6,
+    "editor.wordWrap": "on",
+    "python.analysis.memory.keepLibraryAst": true
+}
