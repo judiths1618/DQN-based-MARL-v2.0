@@ -44,7 +44,7 @@ class Env:
         global cost_reward_matrix
         time_reward_matrix = timematrix
         cost_reward_matrix = costmatrix
-        print(time_reward_matrix, '\n', cost_reward_matrix)
+        # print(time_reward_matrix, '\n', cost_reward_matrix)
         
         self.reset()
 
@@ -148,10 +148,8 @@ class Env:
 
     def set_action(self):
         self.state[self.curr_task] = 1
-
         release = self.release_node(self.curr_task)
 
-        # print(release)
         if len(release) != 0:
             # cnt = 0
             for i in range(len(release)):
@@ -169,7 +167,7 @@ class Env:
         #         break
 
     def observation(self, flag):
-        # get task_type
+        # 观测得：当前的任务的类型
         count = 0
         belong = []
         for i in range(len(self.workflow)):
@@ -181,21 +179,16 @@ class Env:
         # print(belong)
         task_type = self.workflow[belong[0]].subTask[belong[1]].task_type
 
-        # TODO(hang): task_type can be self.curr_task
-        if flag == 0:
+        if flag == 0:   # makespan agent
             return np.concatenate(([task_type], self.vm_time), 0)
-        else:
+        else:           # cost agent
             return np.concatenate(([task_type], self.vm_cost), 0)
-        # if flag == 0:
-        #     return np.concatenate(([self.curr_task], self.vm_time), 0)
-        # else:
-        #     return np.concatenate(([self.curr_task], self.vm_cost), 0)
 
     def time_reward(self, action):
-        # TODO(hang): design a smarter strategy
+        # 记录makespan agent的reward以及其调度策略
         strategy = []
         last_makespan = max(self.vm_time)
-
+        # 取某个workflow的某个任务
         count = 0
         belong = []
         for i in range(len(self.workflow)):
@@ -209,9 +202,8 @@ class Env:
         strategy.append(action + 1)
 
         task_type = self.workflow[belong[0]].subTask[belong[1]].task_type
-
-        # print(agent.state.pos, type)
-        exec_time = time_reward_matrix[action][task_type]
+        exec_time = time_reward_matrix[action][task_type]       #取任务的执行时间数据
+        
         if self.vm_time[action] >= self.start_time[self.curr_task]:
             strategy.append(self.vm_time[action])
             self.vm_time[action] += exec_time
@@ -220,15 +212,6 @@ class Env:
             strategy.append(self.start_time[self.curr_task])
             self.vm_time[action] = self.start_time[self.curr_task] + exec_time
             strategy.append(self.vm_time[action])
-        # self.vm_time[action] += exec_time
-        # print(vm_finish_time)
-        # time = max(self.vm_time) - last_makespan
-
-        # for i in range(self.dim_state):
-        #     if self.state[i] == 0:
-        #         self.task = i
-        #         break
-
         self.strategies.append(strategy)
 
         finish_time = self.vm_time[action]
@@ -237,14 +220,11 @@ class Env:
         for i in range(self.workflow[belong[0]].size):
             if self.workflow[belong[0]].structure[belong[1]][i] == 1:
                 back_node.append(i)
-
         for i in range(len(back_node)):
             if finish_time > self.start_time[back_node[i]]:
                 self.start_time[back_node[i]] = finish_time
-
         # return max(vm_finish_time)
         return last_makespan, exec_time
-        # return pow((4.979 - reward) / 4.079, 2)
 
     def cost_reward(self, action):
         count = 0
@@ -284,21 +264,16 @@ class Env:
         # inc_makespan = max(self.vm_time) - last_makespan
         # b_cost, w_cost, a_cost = self.cost_reward(action)
         # return (pow((exec_time - inc_makespan) / exec_time, 3) + pow((w_cost - a_cost) / (w_cost - b_cost), 3)) / 2
+        # 我们的rewards还是先各算各的，flag 用来判断makespan agent和cost agent
         global record
-        if flag == 0:
+        if flag == 0:   # makespan agent
             last_makespan, exec_time = self.time_reward(action)
             inc_makespan = max(self.vm_time) - last_makespan
-            # round(inc_makespan, 4)
-
-            record = pow((exec_time - inc_makespan) / exec_time, 3)
-            # print(record)
-            return record
-            # return pow((exec_time - inc_makespan) / exec_time, 3)
-        else:
+            return pow((exec_time - inc_makespan) / exec_time, 3)
+        else:           # cost agent
             b_cost, w_cost, a_cost = self.cost_reward(action)
-
-            # return record
-            return 0.2 * pow((w_cost - a_cost) / (w_cost - b_cost), 3) + 0.8 * record
+            # return 0.2 * pow((w_cost - a_cost) / (w_cost - b_cost), 3) + 0.8 * pow((exec_time - inc_makespan) / exec_time, 3)     # 按一定的比例来计算cost agent的reward值
+            return pow((w_cost - a_cost) / (w_cost - b_cost), 3)        
 
     def is_done(self):
         for i in self.state:
