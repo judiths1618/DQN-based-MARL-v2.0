@@ -17,7 +17,7 @@ class XMLtoDAG:
         self.xmlFile = file
         self.n_task = n_task
         self.DAG = np.zeros((self.n_task, self.n_task), dtype=int)
-        self.taskType = np.zeros((self.n_task), dtype=int)
+        self.taskType = np.zeros((self.n_task), dtype=int)  # workflow中的task类型
 
     def get_dag(self):
         # 使用minidom解析器打开 XML 文档
@@ -37,7 +37,6 @@ class XMLtoDAG:
                 self.DAG[parent_id, child_id] = 1
         return self.DAG
 
-    
     def get_precursor(self):
         # 获得任务的前驱结点集合
         precursor = []
@@ -87,7 +86,8 @@ class XMLtoDAG:
             res.append(type)
         for i, type in enumerate(types):
             self.taskType[i]=res.index(type)
-        return res
+            # print(self.taskType[i])
+        return res, self.taskType
 
     def typeRTimeDicts(self, types, jobs):  # 每种任务类型对应的执行时间的集合
         typeRTimeDict = {}
@@ -114,41 +114,41 @@ if __name__ == '__main__':
     import csv
     import pandas as pd
     import numpy as np
-    temps = [
-                XMLtoDAG('.//workflows//Sipht_29.xml', 29), XMLtoDAG('.//workflows//Montage_25.xml', 25), 
-                XMLtoDAG('.//workflows//Inspiral_30.xml', 30), XMLtoDAG('.//workflows//Epigenomics_24.xml', 24), 
-                XMLtoDAG('.//workflows//CyberShake_30.xml', 30)
-            ]
-    # TODO(Yuandou): 写时间数据以及花费数据的文件
+    
+    WFS = ['./workflows/Sipht_29.xml', './workflows/Montage_25.xml', './workflows/Inspiral_30.xml', './workflows/Epigenomics_24.xml',
+        './workflows/CyberShake_30.xml']
+    N = [29, 25, 30, 24, 30]
+    
+    temps = []
+    Jobs = []
+    TYPES = []
+    TASK_TYPES = []
+    for wf, n in zip(WFS, N):
+        temps.append(XMLtoDAG(wf, n))
+        Jobs.append(XMLtoDAG(wf, n).jobs())
+        TYPES += XMLtoDAG(wf, n).types()[0]
+        TASK_TYPES.append(XMLtoDAG(wf, n).types()[1])
+     
     c_tmp = pd.read_excel(".//data//WSP_dataset.xlsx", sheet_name="Containers Price")
     CONTAINERS = list(c_tmp.loc[:, 'Configuration Types'])
     PRF = list(c_tmp.loc[:, 'Performance Ref'])     # the higher (prf), the faster (runtime).
     CST = list(c_tmp.loc[:, 'Cost'])     # the higher (prf), the faster (runtime).
     print(CONTAINERS, PRF, CST)
 
-    N = [
-            XMLtoDAG('.//workflows//Sipht_29.xml', 29).jobs(), XMLtoDAG('.//workflows//Montage_25.xml', 25).jobs(), 
-            XMLtoDAG('.//workflows//Inspiral_30.xml', 30).jobs(), XMLtoDAG('.//workflows//Epigenomics_24.xml', 24).jobs(), 
-            XMLtoDAG('.//workflows//CyberShake_30.xml', 30).jobs()
-        ]
-    TYPES = [XMLtoDAG('.//workflows//Sipht_29.xml', 29).types()+
-        XMLtoDAG('.//workflows//Montage_25.xml', 25).types()+
-        XMLtoDAG('.//workflows//Inspiral_30.xml', 30).types()+
-        XMLtoDAG('.//workflows//Epigenomics_24.xml', 24).types()+
-        XMLtoDAG('.//workflows//CyberShake_30.xml', 30).types()]
-
     print(len(TYPES[0]), TYPES[0])
-        # TODO: 写文件 service time dataset     sertime=np.mean(runtime)/prf+np.mean(transtime)
+    print(len(TASK_TYPES), TASK_TYPES)
+    # TODO: 写文件 service time dataset     sertime=np.mean(runtime)/prf+np.mean(transtime)
+    
     mymat = np.zeros((len(PRF), 39), dtype=float)
     costmat = np.zeros((len(CST), 39), dtype=float)
     j = -1
     for prf, cst in zip(PRF, CST):
         cnt = -1
         j += 1 
-        print(j, prf, cst)
+        # print(j, prf, cst)
         for k, graph in enumerate(temps):
             jobs = graph.jobs()
-            types = graph.types()
+            types = graph.types()[0]
             rt = graph.typeRTimeDicts(types, jobs)
             tt = graph.typeTTimeDicts(types, jobs)
             for i, typ in enumerate(types):

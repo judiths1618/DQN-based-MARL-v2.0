@@ -3,23 +3,25 @@ from workflows.subtask import SubTask
 from workflows.XMLProcess import XMLtoDAG
 
 
-TYPE = ['./workflows/Sipht_29.xml', './workflows/Montage_25.xml', './workflows/Inspiral_30.xml', './workflows/Epigenomics_24.xml',
+WFS = ['./workflows/Sipht_29.xml', './workflows/Montage_25.xml', './workflows/Inspiral_30.xml', './workflows/Epigenomics_24.xml',
         './workflows/CyberShake_30.xml']
-NUMBER = [29, 25, 30, 24, 30]
-
-# TODO(Yuandou): 匹配具体的任务类型转换
-TASK_TYPE = [[0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-             [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 4, 4, 4, 4, 5, 6, 7, 8],
-             [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 2],
-             [0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 6, 7],
-             [0, 1, 2, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 2, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4]]
+N = [29, 25, 30, 24, 30]
+# temps = []
+# Jobs = []
+# TYPES = []
+TASK_TYPE = []
+for wf, n in zip(WFS, N):
+        # temps.append(XMLtoDAG(wf, n))
+        # Jobs.append(XMLtoDAG(wf, n).jobs())
+        # TYPES += XMLtoDAG(wf, n).types()[0]
+        TASK_TYPE.append(XMLtoDAG(wf, n).types()[1])
 
 
 class Workflow:
     def __init__(self, num):
         self.id = num + 1
-        self.type = TYPE[num]
-        self.size = NUMBER[num]
+        self.type = WFS[num]
+        self.size = N[num]
         self.subTask = [SubTask((num + 1) * 1000 + i + 1, TASK_TYPE[num][i]) for i in range(self.size)]  # 子任务
 
         dag = XMLtoDAG(self.type, self.size)

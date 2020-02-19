@@ -31,19 +31,3 @@ plt.ylabel('transmission time (s)')
 plt.xlabel('taskType #')
 plt.title(f)
 plt.show()
-
-# x_l = [i for i, task in enumerate(jobs)]
-# sertime = [float(i['sertime']) for i in jobs]
-# fig, ax = plt.subplots()
-# ax.plot(x_l, sertime, 'ko-')
-
-# ax.set(xlabel='taskId', ylabel='service time (s)',
-#        title='the service time of single task')
-# ax.grid()
-
-# fig.savefig("test.png")
-# plt.show()
-
-
-
-

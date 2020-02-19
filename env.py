@@ -4,22 +4,19 @@ import pandas as pd
 from workflows.workflow import Workflow
 from workflows.XMLProcess import XMLtoDAG
 
-
-
-
-record = 0
-
+    
+time_reward_matrix=None
+cost_reward_matrix=None
 class Env:
-    def __init__(self, n_vm, n_agent):
+    def __init__(self, n_vm, n_agent, n_task):
         self.n_vm = n_vm
         self.n_actions = self.n_vm
-        # TODO(hang): the first info can be task_id
-        self.n_features = 1 + 10  # task_type and vm_state
-        self.n_task = 138
+        self.n_features = 1 + n_vm  # task_type and vm_state
+        self.n_task = n_task
         self.dim_state = self.n_task  # equal to task_num
         self.n_agent = n_agent
 
-        self.workflow = None
+        self.won_taskrkflow = None
         self.curr_task = None
         self.vm_time = None  # the maximum finish time for each vm
         self.vm_cost = None  # the total cost for each vm
@@ -28,24 +25,18 @@ class Env:
         self.strategies = None  # record the planning strategies
         self.state = None  # record which task has been scheduled
         self.done = None  # whether scheduling is over
-        # self.reward = None
-        
-        N = [XMLtoDAG('.//workflows//Sipht_29.xml', 29).jobs(), XMLtoDAG('.//workflows//Montage_25.xml', 25).jobs(), XMLtoDAG('.//workflows//Inspiral_30.xml', 30).jobs(), XMLtoDAG('.//workflows//Epigenomics_24.xml', 24).jobs(), XMLtoDAG('.//workflows//CyberShake_30.xml', 30).jobs()]
+        # self.reward = None        
 
-        # TODO(Yuandou): 读取时间数据以及花费数据的文件
         time_tmp = pd.read_excel(".//data//WSP_dataset.xlsx", sheet_name="Containers Performance", index_col=[0])
         cost_tmp = pd.read_excel(".//data//WSP_dataset.xlsx", sheet_name="Containers Performance", index_col=[0])
-
-        # TODO(Yuandou): 时间数据     
+  
         timematrix = [list(map(float, time_tmp.iloc[i])) for i in range(self.n_vm)]
         costmatrix = [list(map(float, cost_tmp.iloc[i])) for i in range(self.n_vm)]
         
-        global time_reward_matrix
-        global cost_reward_matrix
+        global time_reward_matrix, cost_reward_matrix
         time_reward_matrix = timematrix
         cost_reward_matrix = costmatrix
-        # print(time_reward_matrix, '\n', cost_reward_matrix)
-        
+
         self.reset()
 
     def reset(self):
@@ -115,7 +106,6 @@ class Env:
         release = []
         count = 0
         belong = []
-
         for i in range(len(self.workflow)):
             if task < count + self.workflow[i].size:
                 belong.append(i)
@@ -133,9 +123,7 @@ class Env:
         for i in range(self.workflow[belong[0]].size):
             if self.workflow[belong[0]].structure[belong[1]][i] == 1:
                 back_node.append(i)
-
         # print(back_node)
-
         for i in range(len(back_node)):
             for j in range(self.workflow[belong[0]].size):
                 if self.workflow[belong[0]].structure[j][back_node[i]] == 1 and not self.has_value(
@@ -143,13 +131,11 @@ class Env:
                     break
                 elif j == self.workflow[belong[0]].size - 1:
                     release.append([belong[0], back_node[i]])
-        # print(release)
         return release
 
     def set_action(self):
         self.state[self.curr_task] = 1
         release = self.release_node(self.curr_task)
-
         if len(release) != 0:
             # cnt = 0
             for i in range(len(release)):
@@ -158,7 +144,6 @@ class Env:
                     for j in range(release[i][0]):
                         cnt += self.workflow[j].size
                 cnt += release[i][1]
-                # for i in range(7):
                 self.state[cnt] = 0
 
         # for i in range(len(self.dim_state)):
@@ -178,7 +163,6 @@ class Env:
             count += self.workflow[i].size
         # print(belong)
         task_type = self.workflow[belong[0]].subTask[belong[1]].task_type
-
         if flag == 0:   # makespan agent
             return np.concatenate(([task_type], self.vm_time), 0)
         else:           # cost agent
@@ -213,7 +197,6 @@ class Env:
             self.vm_time[action] = self.start_time[self.curr_task] + exec_time
             strategy.append(self.vm_time[action])
         self.strategies.append(strategy)
-
         finish_time = self.vm_time[action]
 
         back_node = []
@@ -260,19 +243,17 @@ class Env:
         return best, worst, cost
 
     def rewards(self, action, flag):
-        # last_makespan, exec_time = self.time_reward(action)
-        # inc_makespan = max(self.vm_time) - last_makespan
-        # b_cost, w_cost, a_cost = self.cost_reward(action)
-        # return (pow((exec_time - inc_makespan) / exec_time, 3) + pow((w_cost - a_cost) / (w_cost - b_cost), 3)) / 2
         # 我们的rewards还是先各算各的，flag 用来判断makespan agent和cost agent
-        global record
+        # global record
         if flag == 0:   # makespan agent
             last_makespan, exec_time = self.time_reward(action)
             inc_makespan = max(self.vm_time) - last_makespan
+            # record = pow((exec_time - inc_makespan) / exec_time, 2)
+            # return record
             return pow((exec_time - inc_makespan) / exec_time, 3)
         else:           # cost agent
             b_cost, w_cost, a_cost = self.cost_reward(action)
-            # return 0.2 * pow((w_cost - a_cost) / (w_cost - b_cost), 3) + 0.8 * pow((exec_time - inc_makespan) / exec_time, 3)     # 按一定的比例来计算cost agent的reward值
+            # return 0.1 * pow((w_cost - a_cost) / (w_cost - b_cost), 2) + 0.9 * record    # 按一定的比例来计算cost agent的reward值
             return pow((w_cost - a_cost) / (w_cost - b_cost), 3)        
 
     def is_done(self):

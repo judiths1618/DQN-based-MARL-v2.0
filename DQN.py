@@ -103,7 +103,7 @@ class DeepQNetwork:
         observation = observation[np.newaxis, :]
         # forward feed the observation and get q value for every actions
         actions_value = self.sess.run(self.q_eval, feed_dict={self.s: observation})
-        # action = np.argmax(actions_value)     # 取q值最大的对应vm的编号{0，1，2，3，4，5，6}
+        # action = np.argmax(actions_value)     # 取q值最大的对应vm的编号[0,1,2,...]
         # print(actions_value, np.argmax(actions_value))
         return actions_value[0]
 
