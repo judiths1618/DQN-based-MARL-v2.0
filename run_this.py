@@ -19,7 +19,6 @@ MEMORY_SIZE = 10000
 REPLACE_TARGET_ITER = 200
 N_AGENT = 2
 
-
 def run_env():       # 算法的控制流程
     step = 0
     for episode in range(EPISODES):
@@ -84,7 +83,6 @@ def plot_pareto_frontier(Xs, Ys, maxX=True, maxY=True):
         else:
             if pair[1] <= pareto_front[-1][1]:
                 pareto_front.append(pair)
-    
     '''Plotting process'''
     h=plt.plot(Xs, Ys, '.b', markersize=16, label='Non Pareto-optimal')
     pf_X = [pair[0] for pair in pareto_front]
@@ -92,38 +90,17 @@ def plot_pareto_frontier(Xs, Ys, maxX=True, maxY=True):
     plt.plot(pf_X, pf_Y, '.r', markersize=16, label='Pareto optimal')
     plt.xlabel("maximum completion time(makespan)")
     plt.ylabel("total cost")
-    _=plt.legend(loc="lower right", numpoints=1)
+    _=plt.legend(loc="upper right", numpoints=1)
     plt.show() 
     return pf_X, pf_Y
 
 
 if __name__ == '__main__':
-    rewards = [[], []]          # makespan agent 和 cost agent的奖励函数
+    rewards = [[], []]          # makespan agent 和 cost agent的奖励值
     records = [[], [], []]          # makespan agent 和 cost agent的数值以及策略集合
     scaler = StandardScaler()
 
-    # scenario 1
-    WFS = ['./workflows/Sipht_29.xml', './workflows/Montage_25.xml', './workflows/Inspiral_30.xml', './workflows/Epigenomics_24.xml',
-        './workflows/CyberShake_30.xml']    
-    N = [29, 25, 30, 24, 30]
-
-
-    # scenario 1
-
-    temps = []
-    # Jobs = []
-    # TYPES = []
-    # TASK_TYPE = []
-    for wf, n in zip(WFS, N):
-            temps.append(XMLtoDAG(wf, n))
-            # Jobs.append(XMLtoDAG(wf, n).jobs())
-            # TYPES += XMLtoDAG(wf, n).types()[0]
-            # TASK_TYPE.append(XMLtoDAG(wf, n).types()[1])
-
-    c_tmp = pd.read_excel(".//data//WSP_dataset.xlsx", sheet_name="Containers Price")
-    CONTAINERS = list(c_tmp.loc[:, 'Configuration Types'])
-
-    env = Env(len(CONTAINERS), N_AGENT, sum(N))
+    env = Env(N_AGENT)
     memories = [Memory(MEMORY_SIZE) for i in range(N_AGENT)]
     memory = Memory(MEMORY_SIZE)
 
@@ -141,18 +118,18 @@ if __name__ == '__main__':
     ax0.grid(True)
     ax0.set_xlabel('episodes')
     ax0.set_ylabel('makespan metric')
-    line01, = ax0.plot(rewards[0], color='orange', label = "rewards", linestyle='-')
-    # line02, = ax0.plot(records[0], label = "records", linewidth=2)
-    ax0.add_artist(ax0.legend(handles=[line01], loc='upper left'))
-    # ax0.legend(handles=[line02], loc='lower left')
+    # line01, = ax0.plot(rewards[0], color='orange', label = "rewards", linestyle='-')
+    line02, = ax0.plot(records[0], label = "records", linewidth=2)
+    # ax0.add_artist(ax0.legend(handles=[line01], loc='upper left'))
+    ax0.legend(handles=[line02], loc='lower left')
     
     ax1.grid(True)
     ax1.set_xlabel('episodes')
     ax1.set_ylabel('cost metric')
-    line11, = ax1.plot(rewards[1], label = "rewards", linestyle='-')
-    # line12, = ax1.plot(records[1], label = "records", linewidth=2)
-    ax1.add_artist(ax1.legend(handles=[line11], loc='upper left'))
-    # ax1.legend(handles=[line12], loc='lower left')
+    # line11, = ax1.plot(rewards[1], label = "rewards", linestyle='-')
+    line12, = ax1.plot(records[1], label = "records", linewidth=2)
+    # ax1.add_artist(ax1.legend(handles=[line11], loc='upper left'))
+    ax1.legend(handles=[line12], loc='lower left')
 
     fig.subplots_adjust(hspace=0.3)
     fig.tight_layout()
@@ -166,18 +143,12 @@ if __name__ == '__main__':
     opt_index = records[0].index(p[0][0])
     print(opt_index)
     opt_strategy = records[2][opt_index]
+    
     print('DQN-based MARL Gantt图========')
-
-    time_tmp = pd.read_excel(".//data//WSP_dataset.xlsx", sheet_name="Containers Performance", index_col=[0])
-    cost_tmp = pd.read_excel(".//data//WSP_dataset.xlsx", sheet_name="Containers Performance", index_col=[0])
-    timematrix = [list(map(float, time_tmp.iloc[i])) for i in range(len(CONTAINERS))]
-    costmatrix = [list(map(float, cost_tmp.iloc[i])) for i in range(len(CONTAINERS))]
-                
-    time_mcp = timematrix
-    cost_mcp = costmatrix         
-
+    c_tmp = pd.read_excel(".//data//WSP_dataset.xlsx", sheet_name="Containers Price")
+    CONTAINERS = list(c_tmp.loc[:, 'Configuration Types'])
     m_keys = [j + 1 for j in range (len(CONTAINERS))]
-    j_keys = [j for j in range (len(temps))]
+    j_keys = [j for j in range (5)]
     df = []
 
     record = []
@@ -191,7 +162,7 @@ if __name__ == '__main__':
         for j in j_keys:
                 for i in record:
                     if (m, j) == (i[1], i[0]):
-                            df.append (dict (Task='Container # %s' % (CONTAINERS[m - 1]), Start='2020-01-16 %s' % (str(i[2][0])),
+                            df.append (dict (Task='Container %s ' % (CONTAINERS[m - 1]), Start='2020-01-16 %s' % (str(i[2][0])),
                                                         Finish='2020-01-16 %s' % (str (i[2][1])),
                                                         Resource='Workflow %s' % (j + 1)))
     fig = ff.create_gantt (df, index_col='Resource', show_colorbar=True, group_tasks=True,

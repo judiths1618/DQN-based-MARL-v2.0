@@ -1,18 +1,25 @@
 import numpy as np
 import pandas as pd
 
-from workflows.workflow import Workflow
+from workflows.workflow import Workflow, WFS, N
 from workflows.XMLProcess import XMLtoDAG
 
-    
+
 time_reward_matrix=None
 cost_reward_matrix=None
+# scenario 1
+WFS = ['./workflows/Sipht_29.xml', './workflows/Montage_25.xml', './workflows/Inspiral_30.xml', './workflows/Epigenomics_24.xml',
+        './workflows/CyberShake_30.xml']    
+N = [29, 25, 30, 24, 30]
+c_tmp = pd.read_excel(".//data//WSP_dataset.xlsx", sheet_name="Containers Price")
+CONTAINERS = list(c_tmp.loc[:, 'Configuration Types'])
+
 class Env:
-    def __init__(self, n_vm, n_agent, n_task):
-        self.n_vm = n_vm
+    def __init__(self, n_agent):
+        self.n_vm = len(CONTAINERS)
         self.n_actions = self.n_vm
-        self.n_features = 1 + n_vm  # task_type and vm_state
-        self.n_task = n_task
+        self.n_features = 1 + len(CONTAINERS)  # task_type and machine_state
+        self.n_task = sum(N)
         self.dim_state = self.n_task  # equal to task_num
         self.n_agent = n_agent
 
@@ -28,7 +35,7 @@ class Env:
         # self.reward = None        
 
         time_tmp = pd.read_excel(".//data//WSP_dataset.xlsx", sheet_name="Containers Performance", index_col=[0])
-        cost_tmp = pd.read_excel(".//data//WSP_dataset.xlsx", sheet_name="Containers Performance", index_col=[0])
+        cost_tmp = pd.read_excel(".//data//WSP_dataset.xlsx", sheet_name="Containers Cost", index_col=[0])
   
         timematrix = [list(map(float, time_tmp.iloc[i])) for i in range(self.n_vm)]
         costmatrix = [list(map(float, cost_tmp.iloc[i])) for i in range(self.n_vm)]
