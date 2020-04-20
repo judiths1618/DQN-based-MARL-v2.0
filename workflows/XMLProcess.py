@@ -11,7 +11,6 @@ class XMLtoDAG:
     parent_tag = "{http://pegasus.isi.edu/schema/DAX}parent"
     uses_tag = "{http://pegasus.isi.edu/schema/DAX}uses"
 
-
     def __init__(self, file, n_task):
         # 初始化
         self.xmlFile = file
@@ -96,6 +95,7 @@ class XMLtoDAG:
             for i, job in enumerate(jobs):
                 if job['name'] == typ:
                     lst.append(job['runtime'])
+            print(typ, lst)
             typeRTimeDict[typ] = lst
         return typeRTimeDict
 
@@ -114,16 +114,20 @@ if __name__ == '__main__':
     import csv
     import pandas as pd
     import numpy as np
-    
-    WFS = ['./workflows/Sipht_29.xml', './workflows/Montage_25.xml', './workflows/Inspiral_30.xml', './workflows/Epigenomics_24.xml',
-        './workflows/CyberShake_30.xml']
+    import matplotlib.pyplot as plt
+
+    import os
+    print(os.path.abspath('.'))
+    WFS = ['Sipht_29.xml', 'Montage_25.xml', 'Inspiral_30.xml', 'Epigenomics_24.xml',
+        'CyberShake_30.xml']
     N = [29, 25, 30, 24, 30]
-    
+    WLPath = ['./workflows/'+wl for wl in WFS]
+
     temps = []
     Jobs = []
     TYPES = []
     TASK_TYPES = []
-    for wf, n in zip(WFS, N):
+    for wf, n in zip(WLPath, N):
         temps.append(XMLtoDAG(wf, n))
         Jobs.append(XMLtoDAG(wf, n).jobs())
         TYPES += XMLtoDAG(wf, n).types()[0]
@@ -138,7 +142,6 @@ if __name__ == '__main__':
     print(len(TYPES[0]), TYPES[0])
     print(len(TASK_TYPES), TASK_TYPES)
     # TODO: 写文件 service time dataset     sertime=np.mean(runtime)/prf+np.mean(transtime)
-    
     mymat = np.zeros((len(PRF), 39), dtype=float)
     costmat = np.zeros((len(CST), 39), dtype=float)
     j = -1
@@ -151,6 +154,7 @@ if __name__ == '__main__':
             types = graph.types()[0]
             rt = graph.typeRTimeDicts(types, jobs)
             tt = graph.typeTTimeDicts(types, jobs)
+            
             for i, typ in enumerate(types):
                 cnt += 1
                 arv_rt = np.mean(list(rt.values())[i])
@@ -163,3 +167,32 @@ if __name__ == '__main__':
     print(costmat)
     df = pd.DataFrame(costmat)
     # df.to_csv('.//data//Org_dataset-1.csv')
+
+    for wf, n, wl in zip(WLPath, N, WFS):
+        # ------ plot the features of runtime and transmission time for each workflow -------
+        graph = XMLtoDAG(wf, n)
+        jobs = graph.jobs()
+        types = graph.types()[0]
+        rt = graph.typeRTimeDicts(types, jobs)
+        tt = graph.typeTTimeDicts(types, jobs)
+        labels = [str(i+1) for i in range(len(list(rt.keys())))]
+        runtime = list(rt.values())
+        transtime = list(tt.values())
+        fs = 10         # fontsize
+
+        # print(transtime)
+        plt.boxplot(runtime, labels=labels, showmeans=True, meanline=True)
+        plt.ylabel('runtime (s)')
+        plt.xlabel('taskType #')
+        plt.title(wf)
+        plt.savefig('./figures/time_features/rt_'+wl+'.svg')
+        # plt.show()
+
+        plt.boxplot(transtime, labels=labels, showmeans=True, meanline=True)
+        plt.ylabel('transmission time (s)')
+        plt.xlabel('taskType #')
+        plt.title(wf)
+        plt.savefig('./figures/time_features/tt_'+wl+'.svg')
+        # plt.show()
+
+

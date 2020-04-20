@@ -13,7 +13,7 @@ import plotly.figure_factory as ff
 import datetime, random
 
 
-EPISODES = 536
+EPISODES = 8000
 MINI_BATCH = 128
 MEMORY_SIZE = 10000
 REPLACE_TARGET_ITER = 200
@@ -35,7 +35,9 @@ def run_env():       # 算法的控制流程
                 # TODO(Yuandou): 如何处理两个agent的q值：joint q
                 q_joint = []
                 for i in range(len(q_value[0])):
-                    q_joint.append(q_value[0][i] * q_value[1][i])
+                    # new_q = math.sqrt(pow(q_value[0][i],2) + pow(q_value[1][i],2))
+                    new_q = q_value[0][i]+q_value[1][i]
+                    q_joint.append(new_q)
                 action = np.argmax(q_joint)
             else:
                 action = np.random.randint(0, env.n_actions - 1)
@@ -88,9 +90,11 @@ def plot_pareto_frontier(Xs, Ys, maxX=True, maxY=True):
     pf_X = [pair[0] for pair in pareto_front]
     pf_Y = [pair[1] for pair in pareto_front]
     plt.plot(pf_X, pf_Y, '.r', markersize=16, label='Pareto optimal')
+    plt.title('Pareto frontier selection')
     plt.xlabel("maximum completion time(makespan)")
     plt.ylabel("total cost")
     _=plt.legend(loc="upper right", numpoints=1)
+    plt.savefig('./figures/pareto_frontier/results.svg')
     plt.show() 
     return pf_X, pf_Y
 
@@ -118,22 +122,22 @@ if __name__ == '__main__':
     ax0.grid(True)
     ax0.set_xlabel('episodes')
     ax0.set_ylabel('makespan metric')
-    # line01, = ax0.plot(rewards[0], color='orange', label = "rewards", linestyle='-')
-    line02, = ax0.plot(records[0], label = "records", linewidth=2)
-    # ax0.add_artist(ax0.legend(handles=[line01], loc='upper left'))
-    ax0.legend(handles=[line02], loc='lower left')
+    line01, = ax0.plot(rewards[0], color='orange', label = "rewards", linestyle='-')
+    # line02, = ax0.plot(records[0], label = "records", linewidth=2)
+    ax0.add_artist(ax0.legend(handles=[line01], loc='upper left'))
+    # ax0.legend(handles=[line02], loc='lower left')
     
     ax1.grid(True)
     ax1.set_xlabel('episodes')
     ax1.set_ylabel('cost metric')
-    # line11, = ax1.plot(rewards[1], label = "rewards", linestyle='-')
-    line12, = ax1.plot(records[1], label = "records", linewidth=2)
-    # ax1.add_artist(ax1.legend(handles=[line11], loc='upper left'))
-    ax1.legend(handles=[line12], loc='lower left')
+    line11, = ax1.plot(rewards[1], label = "rewards", linestyle='-')
+    # line12, = ax1.plot(records[1], label = "records", linewidth=2)
+    ax1.add_artist(ax1.legend(handles=[line11], loc='upper left'))
+    # ax1.legend(handles=[line12], loc='lower left')
 
     fig.subplots_adjust(hspace=0.3)
     fig.tight_layout()
-    # plt.savefig ("C:\\Users\\Judiths\\Desktop\\Access图表\\Fig4\\" + 'makespan&cost_conv_dqn.svg')
+    plt.savefig ('./figures/reward_features/makespan&cost_conv_dqn.svg')
     plt.show()
 
     # Pareto optimal

@@ -1,16 +1,18 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow.compat.v1 as tf
-
+# import tensorflow as tf
+tf.disable_v2_behavior()
 
 tf.reset_default_graph()
-tf.disable_v2_behavior()
-# tf.disable_eager_execution()
+
+tf.disable_eager_execution()
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
 np.random.seed(1)
 tf.set_random_seed(1)
+# tf.random.set_seed(1)
 
 
 # TODO(hang): improve DQN with double, prioritised replay, dueling network
@@ -23,7 +25,7 @@ class DeepQNetwork:
             learning_rate=0.001,
             reward_decay=0.9,
             e_greedy=0.7,
-            e_greedy_max=0.995,
+            e_greedy_max=0.9995,
             replace_target_iter=200,
             memory_size=10000,
             e_greedy_increment=1e-5,
@@ -53,7 +55,7 @@ class DeepQNetwork:
             self.target_replace_op = [tf.assign(t, e) for t, e in zip(t_params, e_params)]
 
         # 创建一个会话来运行tensorflow的程序
-        self.sess = tf.Session(config=config)
+        self.sess = tf.compat.v1.Session(config=config)
 
         if output_graph:
             tf.summary.FileWriter("logs/", self.sess.graph)
@@ -127,8 +129,8 @@ class DeepQNetwork:
         self.epsilon = self.epsilon + self.epsilon_increment if self.epsilon < self.epsilon_max else self.epsilon_max
         self.learn_step_counter += 1
 
-    def plot_cost(self):
-        plt.plot(np.arange(len(self.cost_his)), self.cost_his)
-        plt.ylabel('Cost')
-        plt.xlabel('training steps')
-        plt.show()
+    # def plot_cost(self):
+    #     plt.plot(np.arange(len(self.cost_his)), self.cost_his)
+    #     plt.ylabel('Cost')
+    #     plt.xlabel('training steps')
+    #     plt.show()

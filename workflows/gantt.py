@@ -1,4 +1,4 @@
-from XMLProcess import XMLtoDAG
+from workflows.XMLProcess import XMLtoDAG
 
 import pandas as pd
 import numpy as np
