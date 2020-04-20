@@ -3,10 +3,10 @@
 ## Overview
 This work is related to my paper called 'Multi-Objective Workflow Scheduling With Deep-Q-Network-Based Multi-Agent Reinforcement Learning', which proposed a novel method for scientific workflow scheduling over heterogeneous virtual machines. Based on the algorithm framework, now i am attempting to utilize the pareto frontier technology combining with the two DQN agents for a bi-objective optimization workflow scheduling problem on heterogeneous containers.
 
-This example uses the [Pegasus Scientific Workflows] (https://confluence.pegasus.isi.edu/display/pegasus/WorkflowGenerator) as the workflow templates and the [AWS Fargate Pricing] (https://aws.amazon.com/fargate/pricing/) as the resource model. 
+This example uses the [Pegasus Scientific Workflows] (https://confluence.pegasus.isi.edu/display/pegasus/WorkflowGenerator) as the workflow templates and the [AWS Fargate Pricing] (https://aws.amazon.com/fargate/pricing/) as the resource model with 10 fixed Amazon containers. 
 
 ## Requirements
-Python 3.6.0+
+Python 3.6.10
 
 ## Usage
 To run the program, please execute the following from the root directory: 
@@ -18,10 +18,12 @@ or
 ```
 pip install -r requirements.txt
 ```
+Once the environment is successfully installed, then go to run the **run_this.py** file, like the following process: 
 
-Once the environment is successfully installed, then go to run the **run_this.py** file
+![Execution process](./figures/run_this.py-DQN-based-MARL-Visual-Studio-Code-2020-04-19-16-21-37.gif)
 
 ## Some results
+
 ### Time features
 #### The distribution of runtime for each task type
 ![CyberShake_30.xml](./figures/time_features/rt_CyberShake_30.xml.svg)
